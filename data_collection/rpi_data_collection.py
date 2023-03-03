@@ -8,8 +8,11 @@ import io
 import socket
 import time
 import asyncio
+import requests
 
 DEBUG = False
+
+ADD_RECORD_URL = 'https://example.com/api/server/add_record/'
 
 # imports for raspberry pi
 if not DEBUG:
@@ -175,6 +178,33 @@ class DataCollector:
             for i, data in enumerate(frame):
                 print(f"sent {i}")
                 self.send(data, self.clientSocket)
+
+    def sendDataPost(self, sensor_data):
+        for frame in sensor_data:
+
+            register_path_url = 'https://example.com/api/server/paths/'
+            res = requests.post(url, {'name':[hardcoded name]})
+            path_id = res.data.id
+            
+            lat = frame[2][0]
+            lon = frame[2][1]
+            image_file_ir = frame[0].tobytes()
+            image_file_rgb = frame[1].tobytes()
+
+            date = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
+
+            # create the payload data with the image data
+            payload = {"lon": lon,
+                        "lat": lat,
+                        "path_id": path_id,
+                        "date": date,
+                        "image_ir": image_file_ir,
+                        "image_rgb": image_file_rgb
+            }
+            
+            # make the POST request with the payload
+            res = requests.post(ADD_RECORD_URL, payload, format='multipart')
+            assert res.status_code == status.HTTP_201_CREATED
 
 
 if __name__ == "__main__":
