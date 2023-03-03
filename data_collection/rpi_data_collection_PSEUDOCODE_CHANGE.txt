@@ -1,0 +1,31 @@
+
+while true:
+    COLLECT IMAGES
+
+    # poll server until wifi connection established (can be tested by pairing drone to hotspot and turning hotspot off and then back on)
+    while true
+        try:
+            res = POST(register path endpoint, payload = {'name': 'TORONTO'}
+            break
+        except Timeout error:
+            pass
+
+    # when server is up, the new path will be registered and the path id will be returned
+    path_id = res.data.id
+
+    # send all records to server
+    for image in imagesCollected:
+        payload = {
+            x
+            y
+            path_id
+            ir image
+            rgb image
+        }
+        res = POST(add record endpoint, attach payload)
+        
+        if res.status = 500:
+            append payload to a txt log of unsuccessfully sent records
+
+    sleep(5min)
+        
