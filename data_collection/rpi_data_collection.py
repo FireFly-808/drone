@@ -222,8 +222,11 @@ class DataCollector:
 
             # make the POST request with the payload
             res = requests.post(ADD_RECORD_URL, data=data, files=files)
-            
-            # TODO: if res == 500 then add to log file
+            if res.status_code == 500:
+                with open("failed_images_log.txt", "a") as f:
+                    entry = str(res.json())
+                    f.write(entry + "\n")
+                    f.close()
 
 
 if __name__ == "__main__":

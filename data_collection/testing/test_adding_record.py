@@ -104,7 +104,13 @@ def sendDataPost2image(lat, lon, path_id, ir_image_data, rgb_image_data):
 
     # make the POST request with the payload
     res = requests.post(ADD_RECORD_URL_PROD, data=data, files=files)
-    print(res.json()['id'])    
+    print(res.json()['id'])
+    print(res.status_code)
+    if True:
+        with open("failed_images_log.txt", "a") as f:
+            entry = str(res.json())
+            f.write(entry + "\n")
+            f.close()
 
 
 # make image
@@ -120,4 +126,4 @@ ir_data = np.reshape(ir, mlx_shape)
 # sendDataPost(path_id)
 # sendDataPostNoSave(path_id)
 path_id = 1
-sendDataPost2image(888, 999, path_id, ir_data, rgb_data)
+sendDataPost2image(888, 901, path_id, ir_data, rgb_data)
