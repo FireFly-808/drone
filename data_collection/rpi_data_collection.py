@@ -9,10 +9,14 @@ import socket
 import time
 import asyncio
 import requests
+from PIL import Image
 
 DEBUG = False
 
 ADD_RECORD_URL = 'https://example.com/api/server/add_record/'
+REGISTER_PATH_URL = 'http://127.0.0.1:8000/api/server/paths/'
+
+PATHNAME = 'CHINA'
 
 # imports for raspberry pi
 if not DEBUG:
@@ -119,10 +123,22 @@ class DataCollector:
     def flightDataCollection(self):
         while(True):
             sensor_data = self.collectPhotos()
-            self.startClient()
-            self.sendData(sensor_data)
-            self.clientSocket.close()
 
+            while True:
+                try:
+                    res = requests.post(REGISTER_PATH_URL, {'name':PATHNAME})
+                    break
+                except TimeoutError:
+                    pass
+            
+            path_id = res.json()['id']
+
+            self.sendData(sensor_data, path_id)
+
+            # ONE FLIGHT
+            break
+
+        
     def collectPhotos(self):
         sensor_data = []
         gps_id = 0
@@ -172,40 +188,50 @@ class DataCollector:
             except Exception as e:
                 pass
 
-    def sendData(self, sensor_data):
-        # Send sensor data to server
+    def sendData(self, sensor_data, path_id):
         for frame in sensor_data:
-            for i, data in enumerate(frame):
-                print(f"sent {i}")
-                self.send(data, self.clientSocket)
-
-    def sendDataPost(self, sensor_data):
-        for frame in sensor_data:
-
-            register_path_url = 'https://example.com/api/server/paths/'
-            res = requests.post(url, {'name':[hardcoded name]})
-            path_id = res.data.id
             
             lat = frame[2][0]
             lon = frame[2][1]
-            image_file_ir = frame[0].tobytes()
-            image_file_rgb = frame[1].tobytes()
-
             date = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
 
             # create the payload data with the image data
-            payload = {"lon": lon,
-                        "lat": lat,
-                        "path_id": path_id,
-                        "date": date,
-                        "image_ir": image_file_ir,
-                        "image_rgb": image_file_rgb
-            }
+            img_ir = Image.fromarray(frame[0], mode="L")
+            img_rgb = Image.fromarray(frame[1], mode="RGB")
+
+            buffer_ir = io.BytesIO()
+            buffer_rgb = io.BytesIO()
             
+            img_ir.save(buffer_ir, format='PNG')
+            img_rgb.save(buffer_rgb, format='PNG')
+
+            ir_image_file = ("image_ir.png", buffer_ir.getvalue())
+            rgb_image_file = ("image_rgb.png", buffer_rgb.getvalue())
+
+            # create the payload data with the image data
+            data = {
+                "lon": lon,
+                "lat": lat,
+                "path_id": path_id,
+                "date": date,
+            }
+            files = {
+                "image_ir": ir_image_file,
+                "image_rgb": rgb_image_file,
+            }
+
             # make the POST request with the payload
-            res = requests.post(ADD_RECORD_URL, payload, format='multipart')
-            assert res.status_code == status.HTTP_201_CREATED
+            res = requests.post(ADD_RECORD_URL, data=data, files=files)
+            
+            # TODO: if res == 500 then add to log file
 
 
 if __name__ == "__main__":
     dc = DataCollector()
+
+
+"""
+            register_path_url = 'http://127.0.0.1:8000/api/server/add_record/'
+            res = requests.post(register_path_url, {'name':})
+            path_id = res.data.id
+"""
