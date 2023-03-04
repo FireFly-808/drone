@@ -128,8 +128,8 @@ class DataCollector:
                 try:
                     res = requests.post(REGISTER_PATH_URL, {'name':PATHNAME})
                     break
-                except TimeoutError:
-                    pass
+                except requests.exceptions.RequestException:
+                    time.sleep(1)
             
             path_id = res.json()['id']
 
