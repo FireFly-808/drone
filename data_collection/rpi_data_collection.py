@@ -13,10 +13,15 @@ from PIL import Image
 
 DEBUG = False
 
-ADD_RECORD_URL = 'https://example.com/api/server/add_record/'
-REGISTER_PATH_URL = 'http://127.0.0.1:8000/api/server/paths/'
+SERVER_URL = 'http://ec2-3-219-240-142.compute-1.amazonaws.com'
 
-PATHNAME = 'CHINA'
+REGISTER_PATH_URL_LOCALHOST = 'http://127.0.0.1:8000/api/server/paths/'
+REGISTER_PATH_URL_PROD = SERVER_URL+'/api/server/paths/'
+
+ADD_RECORD_URL_LOCALHOST = 'http://127.0.0.1:8000/api/server/add_record/'
+ADD_RECORD_URL_PROD = SERVER_URL+'/api/server/add_record/'
+
+PATHNAME = 'china'
 
 # imports for raspberry pi
 if not DEBUG:
@@ -126,7 +131,7 @@ class DataCollector:
 
             while True:
                 try:
-                    res = requests.post(REGISTER_PATH_URL, {'name':PATHNAME})
+                    res = requests.post(REGISTER_PATH_URL_PROD, {'name':PATHNAME})
                     break
                 except requests.exceptions.RequestException:
                     time.sleep(1)
@@ -221,7 +226,7 @@ class DataCollector:
             }
 
             # make the POST request with the payload
-            res = requests.post(ADD_RECORD_URL, data=data, files=files)
+            res = requests.post(ADD_RECORD_URL_PROD, data=data, files=files)
             if res.status_code == 500:
                 with open("failed_images_log.txt", "a") as f:
                     entry = str(res.json())
@@ -231,10 +236,3 @@ class DataCollector:
 
 if __name__ == "__main__":
     dc = DataCollector()
-
-
-"""
-            register_path_url = 'http://127.0.0.1:8000/api/server/add_record/'
-            res = requests.post(register_path_url, {'name':})
-            path_id = res.data.id
-"""
