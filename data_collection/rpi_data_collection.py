@@ -5,9 +5,9 @@
 from datetime import datetime
 import numpy as np
 import io
-import socket
+#import socket
 import time
-import asyncio
+#import asyncio
 import requests
 from PIL import Image
 
@@ -66,39 +66,54 @@ class DataCollector:
             self.mlx = adafruit_mlx90640.MLX90640(i2c) # begin MLX90640 with I2C comm
             self.mlx.refresh_rate = adafruit_mlx90640.RefreshRate.REFRESH_2_HZ # set refresh rate
             self.camera = PiCamera()
-            self.camera.resolution = (320,240)
+            self.camera.resolution = (1280,720)
             self.camera.start_preview()
             
         self.mlx_shape = (24,32)
-        self.camera_shape = (240,320,3)
+        self.camera_shape = (720,1280,3)
 
-    def encode_frame(self, frame):
-        f = io.BytesIO()
-        np.savez(f, frame=frame)
+    def temps_to_rescaled_uints(self, raw_np_image):
+        #Function to convert temperatures to pixels on image
+        # Fix dead pixel
+        raw_np_image[6][0] = int((raw_np_image[6][1] + raw_np_image[5][0] + raw_np_image[7][0]) / 3)
+
+        # Just in case there are any NaNs
+        raw_np_image = np.nan_to_num(raw_np_image)
+
+        _temp_min = np.min(raw_np_image)
+        _temp_max = np.max(raw_np_image)
+        norm = np.uint8((raw_np_image - _temp_min)*255/(_temp_max-_temp_min))
+
+        norm.shape = self.mlx_shape
+        return norm
         
-        packet_size = len(f.getvalue())
-        header = '{0}:'.format(packet_size)
-        header = bytes(header.encode())  # prepend length of array
+    # def encode_frame(self, frame):
+    #     f = io.BytesIO()
+    #     np.savez(f, frame=frame)
+        
+    #     packet_size = len(f.getvalue())
+    #     header = '{0}:'.format(packet_size)
+    #     header = bytes(header.encode())  # prepend length of array
 
-        out = bytearray()
-        out += header
-        print(out)
+    #     out = bytearray()
+    #     out += header
+    #     print(out)
 
-        f.seek(0)
-        out += f.read()
-        return out
+    #     f.seek(0)
+    #     out += f.read()
+    #     return out
 
-    def send(self, frame, socket):
-        if not isinstance(frame, np.ndarray):
-            raise TypeError("input frame is not a valid numpy array")
+    # def send(self, frame, socket):
+    #     if not isinstance(frame, np.ndarray):
+    #         raise TypeError("input frame is not a valid numpy array")
 
-        out = self.encode_frame(frame)
+    #     out = self.encode_frame(frame)
 
-        try:
-            socket.sendall(out)
-        except BrokenPipeError:
-            print("connection broken")
-            raise
+    #     try:
+    #         socket.sendall(out)
+    #     except BrokenPipeError:
+    #         print("connection broken")
+    #         raise
 
     def load_gps(self, path):
         ''' Waypoint file format for parsing
@@ -114,7 +129,8 @@ class DataCollector:
         # Parse GPS coordinates for all the waypoints
         for wayPoint in path_data:
             wayPoint = wayPoint.split('\t')
-            gps_coord.append((wayPoint[8], wayPoint[9]))
+            if float(wayPoint[8]) != 0 or float(wayPoint[9]) != 0:
+                gps_coord.append((wayPoint[8], wayPoint[9]))
 
         return gps_coord
 
@@ -157,7 +173,7 @@ class DataCollector:
                 target_coord = self.gps_coordinates[gps_id]
             
             # If receive trigger from Pixhawk, coordinate reached
-            if GPIO.input(17):
+            if GPIO.input(4):
                 try:
                     curr_time = np.array([datetime.now()])
                     
@@ -170,8 +186,8 @@ class DataCollector:
                     if DEBUG:
                         img_data = np.random.uniform(-20.0, 200.0, 320*240*3)
                     else:
-                        img_data = np.empty((240*320*3), dtype=np.uint8)
-                        self.camera.capture(img_data, 'bgr')
+                        img_data = np.empty((720*1280*3), dtype=np.uint8)
+                        self.camera.capture(img_data, 'rgb')
                     
                     img_data = np.reshape(img_data, self.camera_shape)
                     ir_data = np.reshape(frame, self.mlx_shape)
@@ -180,18 +196,22 @@ class DataCollector:
 
                 except ValueError:
                     pass
+                
+                #if still high wait for it to go low again
+                while(GPIO.input(4)): 
+                    time.sleep(0.05)
 
         return sensor_data
 
-    def startClient(self):
-        # Poll for socket connection
-        self.clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        while (1):
-            try:
-                self.clientSocket.connect((self.server_addr, 2022))
-                return
-            except Exception as e:
-                pass
+    # def startClient(self):
+    #     # Poll for socket connection
+    #     self.clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #     while (1):
+    #         try:
+    #             self.clientSocket.connect((self.server_addr, 2022))
+    #             return
+    #         except Exception as e:
+    #             pass
 
     def sendData(self, sensor_data, path_id):
         for frame in sensor_data:
@@ -201,7 +221,9 @@ class DataCollector:
             date = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
 
             # create the payload data with the image data
-            img_ir = Image.fromarray(frame[0], mode="L")
+            #first must normalize the ir data
+            ir_norm = self.temps_to_rescaled_uints(frame[0])
+            img_ir = Image.fromarray(ir_norm, mode="L")
             img_rgb = Image.fromarray(frame[1], mode="RGB")
 
             buffer_ir = io.BytesIO()
