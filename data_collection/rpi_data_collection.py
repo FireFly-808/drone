@@ -6,7 +6,6 @@ from datetime import datetime
 import numpy as np
 import io
 import time
-#import asyncio
 import requests
 from PIL import Image
 import pickle
@@ -116,7 +115,8 @@ class DataCollector:
         while(True):
             sensor_data = self.collectPhotos()
 
-            #Test saving the data as file
+            #Save the data as pickle file in case of upload fail
+            #May not be the best option for large datasets
             with open('data.pickle', 'wb') as file:
                 pickle.dump(sensor_data, file)
 
