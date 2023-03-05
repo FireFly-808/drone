@@ -38,20 +38,17 @@ class DataCollector:
         ##### CURRENTLY MUST MANUALLY UPDATE WITH FILENAME BEFORE EACH MISSION 
         if not DEBUG:
             self.gps_path = "./path_planning/path_test.waypoints"
+            # Serial port on rpi
+            connection_string = '/dev/serial0'
+            self.drone = connect(connection_string, wait_ready=True, baud=57600)
         else:
             self.gps_path = "..\path_planning\path_test.waypoints"
         
         self.gps_coordinates = self.load_gps(self.gps_path)
         self.num_pics = len(self.gps_coordinates)
 
-        if not DEBUG:
-            # Serial port on rpi
-            connection_string = '/dev/serial0'
-            self.drone = connect(connection_string, wait_ready=True, baud=57600)
-
         self.setupSensors()
         self.flightDataCollection()
-
 
     def setupSensors(self):
         # Instantiate sensor modules & communication protocol
