@@ -5,7 +5,6 @@
 from datetime import datetime
 import numpy as np
 import io
-#import socket
 import time
 #import asyncio
 import requests
@@ -37,19 +36,18 @@ class DataCollector:
 
     def __init__(self):
         # Load GPS coordinates from mission planner.
+        ##### CURRENTLY MUST MANUALLY UPDATE WITH FILENAME BEFORE EACH MISSION 
         if not DEBUG:
-            self.gps_path = "../path_planning/path_test.waypoints"
+            self.gps_path = "./path_planning/path_test.waypoints"
         else:
             self.gps_path = "..\path_planning\path_test.waypoints"
         
         self.gps_coordinates = self.load_gps(self.gps_path)
         self.num_pics = len(self.gps_coordinates)
 
-        self.server_addr = "127.0.0.1"
         if not DEBUG:
-            self.server_addr = "192.168.10.43"
             # Serial port on rpi
-            connection_string = '/dev/ttyAMA0'
+            connection_string = '/dev/serial0'
             self.drone = connect(connection_string, wait_ready=True, baud=57600)
 
         self.setupSensors()
@@ -87,34 +85,6 @@ class DataCollector:
 
         norm.shape = self.mlx_shape
         return norm
-        
-    # def encode_frame(self, frame):
-    #     f = io.BytesIO()
-    #     np.savez(f, frame=frame)
-        
-    #     packet_size = len(f.getvalue())
-    #     header = '{0}:'.format(packet_size)
-    #     header = bytes(header.encode())  # prepend length of array
-
-    #     out = bytearray()
-    #     out += header
-    #     print(out)
-
-    #     f.seek(0)
-    #     out += f.read()
-    #     return out
-
-    # def send(self, frame, socket):
-    #     if not isinstance(frame, np.ndarray):
-    #         raise TypeError("input frame is not a valid numpy array")
-
-    #     out = self.encode_frame(frame)
-
-    #     try:
-    #         socket.sendall(out)
-    #     except BrokenPipeError:
-    #         print("connection broken")
-    #         raise
 
     def load_gps(self, path):
         ''' Waypoint file format for parsing
@@ -127,7 +97,7 @@ class DataCollector:
         path_data = file.readlines() # path_data contains all the waypoints
         gps_coord = []
         
-        # Parse GPS coordinates for all the waypoints
+        # Parse GPS coordinates for all the waypoints, skipping any 0.0 (non coordinate instructions)
         for wayPoint in path_data:
             wayPoint = wayPoint.split('\t')
             if float(wayPoint[8]) != 0 or float(wayPoint[9]) != 0:
@@ -207,16 +177,6 @@ class DataCollector:
                     time.sleep(0.05)
 
         return sensor_data
-
-    # def startClient(self):
-    #     # Poll for socket connection
-    #     self.clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #     while (1):
-    #         try:
-    #             self.clientSocket.connect((self.server_addr, 2022))
-    #             return
-    #         except Exception as e:
-    #             pass
 
     def sendData(self, sensor_data, path_id):
         for frame in sensor_data:
