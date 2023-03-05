@@ -10,6 +10,7 @@ import time
 #import asyncio
 import requests
 from PIL import Image
+import pickle
 
 DEBUG = False
 
@@ -144,6 +145,10 @@ class DataCollector:
     def flightDataCollection(self):
         while(True):
             sensor_data = self.collectPhotos()
+
+            #Test saving the data as file
+            with open('data.pickle', 'wb') as file:
+                pickle.dump(sensor_data, file)
 
             while True:
                 try:
