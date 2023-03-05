@@ -20,7 +20,7 @@ REGISTER_PATH_URL_PROD = SERVER_URL+'/api/server/paths/'
 ADD_RECORD_URL_LOCALHOST = 'http://127.0.0.1:8000/api/server/add_record/'
 ADD_RECORD_URL_PROD = SERVER_URL+'/api/server/add_record/'
 
-PATHNAME = 'china'
+PATHNAME = 'waterloo campus'
 
 # imports for raspberry pi
 if not DEBUG:
