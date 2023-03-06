@@ -146,7 +146,7 @@ class DataCollector:
 
         # Collect data
         while(len(sensor_data) < self.num_pics if not DEBUG else 3):
-            curr_coord = self.get_curr_gps() # Current GPS position recieved over telemetary port from drone
+           
             if DEBUG:
                 target_coord = [0,0]
             else:
@@ -154,6 +154,7 @@ class DataCollector:
             
             # If receive trigger from Pixhawk, coordinate reached
             if GPIO.input(4):
+                curr_coord = self.get_curr_gps() # Current GPS position recieved over telemetary port from drone
                 try:
                     curr_time = np.array([datetime.now()])
                     
