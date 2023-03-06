@@ -21,7 +21,7 @@ REGISTER_PATH_URL_PROD = SERVER_URL+'/api/server/paths/'
 ADD_RECORD_URL_LOCALHOST = 'http://127.0.0.1:8000/api/server/add_record/'
 ADD_RECORD_URL_PROD = SERVER_URL+'/api/server/add_record/'
 
-PATHNAME = 'e7'
+PATHNAME = 'field'
 
 # imports for raspberry pi
 if not DEBUG:
@@ -38,7 +38,7 @@ class DataCollector:
         # Load GPS coordinates from mission planner.
         ##### CURRENTLY MUST MANUALLY UPDATE WITH FILENAME BEFORE EACH MISSION 
         if not DEBUG:
-            self.gps_path = "./path_planning/path_test.waypoints"
+            self.gps_path = "./path_planning/path_test2.waypoints"
             # Serial port on rpi
             connection_string = '/dev/serial0'
             self.drone = connect(connection_string, wait_ready=True, baud=57600)
