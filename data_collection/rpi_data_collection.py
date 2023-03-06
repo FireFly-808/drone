@@ -9,6 +9,7 @@ import time
 import requests
 from PIL import Image
 import pickle
+import os
 
 DEBUG = False
 
@@ -117,13 +118,16 @@ class DataCollector:
             with open('data.pickle', 'wb') as file:
                 pickle.dump(sensor_data, file)
 
-            while True:
-                try:
-                    res = requests.post(REGISTER_PATH_URL_PROD, {'name':PATHNAME})
+            while(True):
+                # print("trying to connect")
+                res = os.system('ping google.com')
+                if not res:
                     break
-                except requests.exceptions.RequestException:
-                    time.sleep(1)
+                time.sleep(1)
+
+            # print("connected")
             
+            res = requests.post(REGISTER_PATH_URL_PROD, {'name':PATHNAME})
             path_id = res.json()['id']
 
             self.sendData(sensor_data, path_id)
@@ -170,8 +174,13 @@ class DataCollector:
                     pass
                 
                 #if still high wait for it to go low again
-                while(GPIO.input(4)): 
-                    time.sleep(0.05)
+                startTime = time.time()
+                while(1): 
+                    if GPIO.input(4):
+                        startTime = time.time()
+                    elif time.time() - startTime > 1:
+                        break
+
 
         return sensor_data
 
