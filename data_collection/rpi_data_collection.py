@@ -50,6 +50,7 @@ class DataCollector:
 
         self.setupSensors()
         self.flightDataCollection()
+        GPIO.cleanup()
 
     def setupSensors(self):
         # Instantiate sensor modules & communication protocol
