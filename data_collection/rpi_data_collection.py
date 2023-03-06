@@ -13,7 +13,7 @@ import socket
 
 DEBUG = False
 
-SERVER_URL = 'ec2-44-214-38-103.compute-1.amazonaws.com'
+SERVER_URL = 'http://ec2-44-214-38-103.compute-1.amazonaws.com'
 
 REGISTER_PATH_URL_LOCALHOST = 'http://127.0.0.1:8000/api/server/paths/'
 REGISTER_PATH_URL_PROD = SERVER_URL+'/api/server/paths/'
