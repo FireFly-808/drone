@@ -21,7 +21,7 @@ REGISTER_PATH_URL_PROD = SERVER_URL+'/api/server/paths/'
 ADD_RECORD_URL_LOCALHOST = 'http://127.0.0.1:8000/api/server/add_record/'
 ADD_RECORD_URL_PROD = SERVER_URL+'/api/server/add_record/'
 
-PATHNAME = 'waterloo campus'
+PATHNAME = 'e7'
 
 # imports for raspberry pi
 if not DEBUG:
@@ -119,16 +119,16 @@ class DataCollector:
                 pickle.dump(sensor_data, file)
 
             while(True):
-                # print("trying to connect")
+                print("trying to connect")
                 try:
                 # Create a socket object
                     socket.create_connection(("www.google.com", 80))
                     break
                 except OSError:
                     pass
-                time.sleep(1)
+                time.sleep(3)
 
-            # print("connected")
+            print("connected")
             
             res = requests.post(REGISTER_PATH_URL_PROD, {'name':PATHNAME})
             path_id = res.json()['id']
@@ -178,11 +178,14 @@ class DataCollector:
                 
                 #if still high wait for it to go low again
                 startTime = time.time()
-                while(1): 
+                print("Signal is high")
+                while(1):
+                    time.sleep(0.05) 
                     if GPIO.input(4):
                         startTime = time.time()
                     elif time.time() - startTime > 1:
                         break
+                print("Signal is low")
 
         self.camera.stop_preview()
         return sensor_data
