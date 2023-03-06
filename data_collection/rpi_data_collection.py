@@ -9,7 +9,7 @@ import time
 import requests
 from PIL import Image
 import pickle
-import os
+import socket
 
 DEBUG = False
 
@@ -120,9 +120,12 @@ class DataCollector:
 
             while(True):
                 # print("trying to connect")
-                res = os.system('ping google.com')
-                if not res:
+                try:
+                # Create a socket object
+                    socket.create_connection(("www.google.com", 80))
                     break
+                except OSError:
+                    pass
                 time.sleep(1)
 
             # print("connected")
@@ -181,7 +184,7 @@ class DataCollector:
                     elif time.time() - startTime > 1:
                         break
 
-
+        self.camera.stop_preview()
         return sensor_data
 
     def sendData(self, sensor_data, path_id):
