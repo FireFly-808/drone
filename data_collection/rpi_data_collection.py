@@ -9,6 +9,7 @@ import time
 import requests
 from PIL import Image
 import pickle
+import socket
 
 DEBUG = False
 
@@ -20,7 +21,7 @@ REGISTER_PATH_URL_PROD = SERVER_URL+'/api/server/paths/'
 ADD_RECORD_URL_LOCALHOST = 'http://127.0.0.1:8000/api/server/add_record/'
 ADD_RECORD_URL_PROD = SERVER_URL+'/api/server/add_record/'
 
-PATHNAME = 'waterloo campus'
+PATHNAME = 'e7'
 
 # imports for raspberry pi
 if not DEBUG:
@@ -49,6 +50,7 @@ class DataCollector:
 
         self.setupSensors()
         self.flightDataCollection()
+        GPIO.cleanup()
 
     def setupSensors(self):
         # Instantiate sensor modules & communication protocol
@@ -117,13 +119,19 @@ class DataCollector:
             with open('data.pickle', 'wb') as file:
                 pickle.dump(sensor_data, file)
 
-            while True:
+            while(True):
+                print("trying to connect")
                 try:
-                    res = requests.post(REGISTER_PATH_URL_PROD, {'name':PATHNAME})
+                # Create a socket object
+                    socket.create_connection(("www.google.com", 80))
                     break
-                except requests.exceptions.RequestException:
-                    time.sleep(1)
+                except OSError:
+                    pass
+                time.sleep(3)
+
+            print("connected")
             
+            res = requests.post(REGISTER_PATH_URL_PROD, {'name':PATHNAME})
             path_id = res.json()['id']
 
             self.sendData(sensor_data, path_id)
@@ -170,9 +178,17 @@ class DataCollector:
                     pass
                 
                 #if still high wait for it to go low again
-                while(GPIO.input(4)): 
-                    time.sleep(0.05)
+                startTime = time.time()
+                print("Signal is high")
+                while(1):
+                    time.sleep(0.05) 
+                    if GPIO.input(4):
+                        startTime = time.time()
+                    elif time.time() - startTime > 1:
+                        break
+                print("Signal is low")
 
+        self.camera.stop_preview()
         return sensor_data
 
     def sendData(self, sensor_data, path_id):
